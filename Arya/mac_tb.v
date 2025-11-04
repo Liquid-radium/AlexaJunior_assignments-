@@ -1,5 +1,3 @@
-// Code your testbench here
-// or browse Examples
 `timescale 1ns/1ps
 module mac_tb;
     reg clk;
@@ -19,13 +17,13 @@ module mac_tb;
         #10;
         r=0;
       
-      	a=6; b=9; #10;
+      	a=6; b=9; #10; 
       	a=5; b=4; #10;
       	a=9; b=2; #10;
       	a=3; b=8; #10;
-      	r=1; #10 r=0; 
+      	r=1; #10 r=0; // testing reset
       	a=255; b=255; #10;
-      	a=40; b=40; #10;
+      	a=40; b=40; #10; // testing overflow
       	
       	$finish;
     end
