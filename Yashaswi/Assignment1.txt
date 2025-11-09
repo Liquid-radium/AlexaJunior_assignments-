@@ -46,7 +46,8 @@ module pipelined_mac (
     input clk,
     input reset,
     input [7:0] A, B,
-    output reg [15:0] ACC
+    output reg [15:0] ACC,
+    output reg overflow
 );
 
     // Stage 1: Input registers
@@ -56,7 +57,7 @@ module pipelined_mac (
     reg [15:0] product_reg;
 
     // Stage 3: Accumulator
-    reg [15:0] acc_reg;
+    reg [16:0] acc_reg;
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -65,6 +66,7 @@ module pipelined_mac (
             product_reg <= 0;
             acc_reg <= 0;
             ACC <= 0;
+            overflow <= 0;
         end
         else begin
             // Stage 1: Latch inputs
@@ -74,14 +76,19 @@ module pipelined_mac (
             // Stage 2: Multiply previous inputs
             product_reg <= A_reg * B_reg;
 
-            // Stage 3: Accumulate
-            acc_reg <= acc_reg + product_reg;
-
-            // Output result
-            ACC <= acc_reg;
+           
         end
     end
 
+    always @(posedge clk or posedge reset) begin
+
+          // Stage 3: Accumulate
+            acc_reg <= acc_reg + product_reg;
+
+            // Output result
+            ACC <= acc_reg[15:0];
+            overflow <= acc_reg[16];
+end 
 endmodule
 
 `timescale 1ns / 1ps
@@ -90,14 +97,15 @@ module pipelined_mac_tb;
     reg clk, reset;
     reg [7:0] A, B;
     wire [15:0] ACC;
+    wire overflow;
 
-    pipelined_mac uut (.clk(clk), .reset(reset), .A(A), .B(B), .ACC(ACC));
+    pipelined_mac uut (.clk(clk), .reset(reset), .A(A), .B(B), .ACC(ACC),.overflow(overflow));
 
     always #5 clk = ~clk;
 
     initial begin
         clk = 0; reset = 0; A = 0; B = 0;
-        $monitor("Time=%0t | A=%d | B=%d | ACC=%d", $time, A, B, ACC);
+        $monitor("Time=%0t | A=%d | B=%d | ACC=%d | overflow=%d", $time, A, B, ACC,overflow);
 
         reset = 1; #10; reset = 0; #10;
 
@@ -128,7 +136,7 @@ module mac_overflow (
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             ACC <= 0;
-            overflow_flag <= 0;
+            overflow <= 0;
         end
         else begin
             ACC <= sum[15:0];
